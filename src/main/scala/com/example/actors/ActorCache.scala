@@ -10,12 +10,20 @@ object ActorCache {
 
 class ActorCache (event: String) extends Actor {
 
+  import context._
+
   // session_id + processed_records
-  var cachedRecords = Map.empty[String, Option[Seq[QueryResult]]]
+//  var cachedRecords = Map.empty[String, Option[Seq[QueryResult]]]
 
-  def receive: PartialFunction[Any, Unit] = {
+  //todo: check if 1 receive method is possible
+  def receive(): PartialFunction[Any, Unit] = {
+    receiveMap(Map.empty)
+  }
 
-    case AddCachedRecord(sessionId, records) => cachedRecords = cachedRecords + (sessionId -> records)
+  def receiveMap(cachedRecords: Map[String, Option[Seq[QueryResult]]]): PartialFunction[Any, Unit] = {
+
+    case AddCachedRecord(sessionId, records) =>
+      become(receiveMap(cachedRecords + (sessionId -> records)))
 
     case GetCachedRecord(sessionId) =>
       sender() ! ReturnCachedRecord(sessionId, cachedRecords.getOrElse(sessionId, None))
