@@ -1,6 +1,6 @@
 package com.example.actors
 
-import akka.actor.{Actor, PoisonPill, Props}
+import akka.actor.{Actor, Props}
 import com.example.messages.ActorCache.{AddCachedRecord, GetCachedRecord, ReturnCachedRecord}
 import com.example.utils.DTO.QueryResult
 
@@ -12,10 +12,7 @@ class ActorCache (event: String) extends Actor {
 
   import context._
 
-  // session_id + processed_records
-//  var cachedRecords = Map.empty[String, Option[Seq[QueryResult]]]
-
-  //todo: check if 1 receive method is possible
+  //fixme: check if 1 receive method is possible
   def receive(): PartialFunction[Any, Unit] = {
     receiveMap(Map.empty)
   }

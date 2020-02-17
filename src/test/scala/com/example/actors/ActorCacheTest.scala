@@ -1,19 +1,37 @@
 package com.example.actors
 
-import org.scalatest.{Matchers, WordSpec}
+import akka.actor.ActorSystem
+import akka.testkit.{ImplicitSender, TestActors, TestKit}
+import com.example.messages.ActorCache.{AddCachedRecord, GetCachedRecord, ReturnCachedRecord}
+import com.example.utils.DTO.QueryResult
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class ActorCacheTest extends WordSpec with Matchers {
+class ActorCacheTest extends TestKit(ActorSystem("MySpec"))
+  with ImplicitSender
+  with AnyWordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
-  //todo: add actor test as dependency (akka test possible)
-//
-//  "A Greeter" must {
-//    //#test
-//    "reply to greeted" in {
-//      val replyProbe = createTestProbe[Greeted]()
-//      val underTest = spawn(Greeter())
-//      underTest ! Greet("Santa", replyProbe.ref)
-//      replyProbe.expectMessage(Greeted("Santa", underTest.ref))
-//    }
-//    //#test
-//  }
+  override def afterAll: Unit = {
+    TestKit.shutdownActorSystem(system)
+  }
+
+  "An ActorCache actor" must {
+
+    "send back cached messages unchanged" in {
+      val cache = system.actorOf(ActorCache.props("cache"))
+      cache ! AddCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2"))))
+      cache ! GetCachedRecord("123")
+      expectMsg(ReturnCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2")))))
+    }
+
+    "send back empty messages for non-existing sessions" in {
+      val cache = system.actorOf(ActorCache.props("cache"))
+      cache ! AddCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2"))))
+      cache ! GetCachedRecord("124")
+      expectMsg(ReturnCachedRecord("124", None))
+    }
+  }
 }
