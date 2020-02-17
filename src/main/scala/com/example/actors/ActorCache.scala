@@ -1,8 +1,12 @@
 package com.example.actors
 
-import akka.actor.{Actor, PoisonPill}
+import akka.actor.{Actor, PoisonPill, Props}
 import com.example.messages.ActorCache.{AddCachedRecord, GetCachedRecord, ReturnCachedRecord}
 import com.example.utils.DTO.QueryResult
+
+object ActorCache {
+  def props(event: String): Props = Props(new ActorCache(event))
+}
 
 class ActorCache (event: String) extends Actor {
 

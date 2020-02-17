@@ -1,13 +1,15 @@
 package com.example.actors
 
-import akka.actor.Actor
-import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
-import com.example.messages.ProcessRecord.{AddUserDataToProcess, GetStatusOrResult, ReturnSession, ReturnStatusOrResult}
-import com.example.utils.DTO.{Entity, QueryResult, SessionResult, UserData}
 import java.util.UUID.randomUUID
 
+import akka.actor.{Actor, Props}
+import com.example.messages.ProcessRecord.{AddUserDataToProcess, GetStatusOrResult, ReturnSession, ReturnStatusOrResult}
+import com.example.utils.DTO.{Entity, QueryResult, UserData}
 import com.example.utils.{DTO, Matcher}
+
+object ProcessRecord {
+  def props(event: String): Props = Props(new ProcessRecord(event))
+}
 
 class ProcessRecord (event: String) extends Actor {
 

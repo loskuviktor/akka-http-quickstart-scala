@@ -1,13 +1,9 @@
 package com.example.messages
 
-import akka.actor.Props
-import com.example.actors.ProcessRecord
 import com.example.utils.DTO
-import com.example.utils.DTO.{QueryResult, UserData}
+import com.example.utils.DTO.QueryResult
 
 object ProcessRecord {
-
-  def props(event: String): Props = Props(new ProcessRecord(event))
 
   case class GetStatusOrResult(session_id: String)
   case class AddUserDataToProcess(user_data: DTO.UserData, companies: Seq[DTO.Entity])
