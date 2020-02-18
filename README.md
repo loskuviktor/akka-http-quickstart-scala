@@ -13,11 +13,7 @@ At the sbt prompt, enter ```reStart```.
 sbt builds the project, starts an Akka HTTP server, and runs the application.
 
 # Exercising the app
-To send a set of user provided records the set should be passed in request parameters in JSON format. While you could do this in a browser, it is much simpler to use one of the following:
-
-A command line tool, such as ```cURL```.
-Browser add-ons such as ```RESTClient``` for Firefox or Postman for Chrome.
-Follow the steps appropriate for your tool:
+To send a set of user provided records the set should be passed in request parameters in the JSON format. It is possible to use one of the following tools:
 
 - cURL commands
 - Browser-based tools
