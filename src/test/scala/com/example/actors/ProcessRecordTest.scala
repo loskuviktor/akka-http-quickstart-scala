@@ -27,7 +27,7 @@ class ProcessRecordTest extends TestKit(ActorSystem("MySpec"))
 
     "find a matched record if such exists and return to a user" in {
       val matchCalculator = system.actorOf(MatchCalculator.props(Util.readResourceFile("companies.csv")))
-      val cache = system.actorOf(ActorCache.props("cache"))
+      val cache = system.actorOf(ActorCache.props)
 
       val processRecord = system.actorOf(ProcessRecord.props(sessionId, matchCalculator, cache))
       processRecord ! AddUserDataToProcess(DTO.UserData(0.9D, Seq(Entity("4047907","Jesus House"))))

@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import com.example.utils.DTO.{Entity, SessionResult, UserData}
 import com.example.utils.{DTO, Matcher}
 
-// rename to Router
+//  Router
 object UserRegistry {
   sealed trait Command
   final case class CreateSession(userData: UserData, replyTo: ActorRef[SessionResult]) extends Command

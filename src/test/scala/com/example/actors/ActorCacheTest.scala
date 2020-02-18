@@ -21,14 +21,14 @@ class ActorCacheTest extends TestKit(ActorSystem("MySpec"))
   "An ActorCache actor" must {
 
     "send back cached messages unchanged" in {
-      val cache = system.actorOf(ActorCache.props("cache"))
+      val cache = system.actorOf(ActorCache.props)
       cache ! AddCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2"))))
       cache ! GetCachedRecord("123")
       expectMsg(ReturnCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2")))))
     }
 
     "send back empty messages for non-existing sessions" in {
-      val cache = system.actorOf(ActorCache.props("cache"))
+      val cache = system.actorOf(ActorCache.props)
       cache ! AddCachedRecord("123", Some(Seq(QueryResult("id", "name", "id2", "name2"))))
       cache ! GetCachedRecord("124")
       expectMsg(ReturnCachedRecord("124", None))

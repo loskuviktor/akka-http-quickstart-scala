@@ -5,10 +5,10 @@ import com.example.messages.ActorCache.{AddCachedRecord, GetCachedRecord, Return
 import com.example.utils.DTO.QueryResult
 
 object ActorCache {
-  def props(event: String): Props = Props(new ActorCache(event))
+  def props: Props = Props(new ActorCache)
 }
 
-class ActorCache (event: String) extends Actor {
+class ActorCache extends Actor {
 
   import context._
 
