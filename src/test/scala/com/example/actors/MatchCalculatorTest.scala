@@ -18,17 +18,17 @@ class MatchCalculatorTest extends TestKit(ActorSystem("MySpec"))
     TestKit.shutdownActorSystem(system)
   }
 
-  "An ActorCache actor" must {
+  "An MatchCalculator actor" must {
 
     "find a matched record if such exists" in {
-      val cache = system.actorOf(MatchCalculator.props(Util.readResourceFile("companies.csv")))
-      cache ! GetUserRecord(1D, DTO.Entity("4047907","Jesus House"))
+      val matchCalculator = system.actorOf(MatchCalculator.props(Util.readResourceFile("companies.csv")))
+      matchCalculator ! GetUserRecord(1D, DTO.Entity("4047907","Jesus House"))
       expectMsg(ReturnUserRecord(DTO.QueryResult("4047907","Jesus House", "4047907", "Jesus House")))
     }
 
     "fill with empty fields if it doesn't exist" in {
-      val cache = system.actorOf(MatchCalculator.props(Util.readResourceFile("companies.csv")))
-      cache ! GetUserRecord(0.5D, DTO.Entity("4047907","Mouse House"))
+      val matchCalculator = system.actorOf(MatchCalculator.props(Util.readResourceFile("companies.csv")))
+      matchCalculator ! GetUserRecord(0.5D, DTO.Entity("4047907","Mouse House"))
       expectMsg(ReturnUserRecord(DTO.QueryResult("4047907","Mouse House", "", "")))
     }
   }

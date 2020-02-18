@@ -1,45 +1,54 @@
 package com.example.actors
 
-import java.util.UUID.randomUUID
+import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, Props}
-import com.example.messages.ProcessRecord.{AddUserDataToProcess, GetStatusOrResult, ReturnSession, ReturnStatusOrResult}
-import com.example.utils.DTO.{Entity, QueryResult, UserData}
-import com.example.utils.{DTO, Matcher}
+import akka.actor.{Actor, ActorRef, Props}
+import akka.pattern.ask
+import akka.util.Timeout
+import com.example.messages
+import com.example.messages.MatchCalculator.ReturnUserRecord
+import com.example.messages.ProcessRecord.{AddUserDataToProcess, GetStatusOrResult, ReturnStatusOrResult}
+import com.example.utils.DTO.QueryResult
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
+import scala.util.Success
 
 object ProcessRecord {
-  def props(event: String): Props = Props(new ProcessRecord(event))
+  def props(sessionId: String, matchCalculator: ActorRef, actorCache: ActorRef): Props =
+    Props(new ProcessRecord(sessionId, matchCalculator, actorCache))
 }
 
-class ProcessRecord (event: String) extends Actor {
+class ProcessRecord (sessionId: String, matchCalculator: ActorRef, actorCache: ActorRef) extends Actor {
 
-  var isCompleted: Boolean = false
-  var queriesResult: Option[Seq[QueryResult]] = None
-  var session_id: String = ""
+   var requestsFutures: Seq[Future[Any]] = Seq()
 
-  private def processData(userData: UserData, companies: Seq[Entity]): Option[Seq[QueryResult]] =
-    if (userData.userRecords.isEmpty) {
-      None
-    } else {
-      val queriesResult = userData.userRecords.map(entity => {
-        val DTO.Entity(id, name) = Matcher.matchCompanies(entity.name, companies, userData.threshold)
-          .map(sm => DTO.Entity(sm.id, sm.name)).getOrElse(DTO.Entity("",""))
-        DTO.QueryResult(entity.id, entity.name, id, name)
-      })
+   implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
-      Some(queriesResult)
-    }
-
-  def receive: PartialFunction[Any, Unit] = {
+   def receive: PartialFunction[Any, Unit] = {
 
     case GetStatusOrResult(session_id) =>
-      if (!isCompleted) sender() ! ReturnStatusOrResult(s"${queriesResult.map(_.size).getOrElse(0)} records are processed!", None)
-      else sender() ! ReturnStatusOrResult("All records are processed!", queriesResult)
+      val readyRequests = this.requestsFutures.map(_.isCompleted).count(_ == true)
+      val commonCount = this.requestsFutures.size
+      val percentage: Double = if (readyRequests == commonCount) 100D else 100D / commonCount * readyRequests
 
-    case AddUserDataToProcess(user_data, companies) => {
-      this.session_id = randomUUID.toString
-      this.queriesResult = processData(user_data, companies)
-      sender() ! ReturnSession(this.session_id)
-    }
-  }
+      if (percentage != 100D) sender() ! ReturnStatusOrResult(s"$percentage% is processed!", None)
+      else {
+        sender() ! ReturnStatusOrResult("100% is processed!", Some(completeFutures(this.requestsFutures)))
+        actorCache ! messages.ActorCache.AddCachedRecord(session_id, Some(completeFutures(this.requestsFutures)))
+        context.stop(self)
+      }
+
+    case AddUserDataToProcess(user_data) =>
+      this.requestsFutures = user_data.userRecords
+        .map(entity => matchCalculator ? messages.MatchCalculator.GetUserRecord(user_data.threshold, entity))
+   }
+
+   protected def completeFutures(futures: Seq[Future[Any]]): Seq[QueryResult] = {
+     val seq = Future.sequence(futures.map(_.transform(Success(_))))
+     val successes = seq.map(_.collect{case Success(x)=>x})
+     Await.result(successes, 1 second).map(_.asInstanceOf[ReturnUserRecord]).map(_.queryResult)
+   }
 }
